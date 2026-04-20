@@ -15,7 +15,7 @@ Este projeto foi construído utilizando as ferramentas mais modernas do ecossist
 ## Como rodar o projeto localmente
 
 1. ```bash
-   git clone [https://github.com/seu-usuario/maestro.git](https://github.com/seu-usuario/maestro.git)
+   git clone https://github.com/BeatrizCamlo/maestro-front.git
 2. cd maestro
 3. npm install
 4. npm run dev
