@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  /* --- PALETA PRINCIPAL --- */
+  --color-primary-dark: #113272;
+  --color-primary-main: #164194;
+  --color-primary-light: #0095DB;
+  --color-primary-sky: #79CBF2;
+  --color-primary-pale: #B4CBE0;
+  --color-primary-ghost: #DAE6F2;
+
+  /* --- PALETA NEUTRA --- */
+  --color-neutral-darkest: #353438;
+  --color-neutral-dark: #4E4E4E;
+  --color-neutral-medium: #777777;
+  --color-neutral-light: #CCCCCC;
+  --color-neutral-extra-light: #DDDDDD;
+  --color-neutral-white: #FFFFFF;
+
+  /* --- STATUS --- */
+  --color-danger-dark: #A94442;
+  --color-danger-light: #F58784;
+  --color-danger-pale: #FFC3C2;
+}
+
+/* Configurações Globais Adicionais */
+@layer base {
+  body {
+    @apply bg-[#DAE6F2] text-neutral-darkest antialiased;
+    font-family: 'Liberation Sans', sans-serif;
+  }
+}
