@@ -16,6 +16,6 @@ Este projeto foi construído utilizando as ferramentas mais modernas do ecossist
 
 1. ```bash
    git clone https://github.com/BeatrizCamlo/maestro-front.git
-2. cd maestro
-3. npm install
-4. npm run dev
+2. ```bash cd maestro
+3. ```bash npm install
+4. ```bash npm run dev
