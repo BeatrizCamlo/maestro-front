@@ -4,7 +4,6 @@ import MainLayout from './components/layout/MainLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
-// Exemplo de uma página protegida que você criará depois
 const Dashboard = () => <div className="text-center"><h2>Bem-vindo ao Maestro!</h2></div>;
 
 function App() {
