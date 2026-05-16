@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+
 import api from '../services/api.js';
 
 const Login = () => {
@@ -24,7 +25,6 @@ const Login = () => {
       localStorage.setItem('token', response.data.token);
       navigate('/dashboard');
     } catch (error) {
-      console.error("Erro na autenticação:", error);
       if (!error.response) {
         setErrorMsg("Não foi possível conectar ao servidor. Verifique sua conexão.");
       } else if (error.response.status === 401) {

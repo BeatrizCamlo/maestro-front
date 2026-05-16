@@ -1,4 +1,5 @@
 import React from 'react';
+
 import Button from '../common/Button';
 
 const UserCard = ({ name, email, role }) => {
