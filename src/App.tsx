@@ -4,8 +4,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import MainLayout from './components/layout/MainLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ProtectedLayout from './components/layout/protectedLayout';
+import Dashboard from './pages/(protected)/dashboard';
+import Users from './pages/(protected)/users';
 
-const Dashboard = () => <div className="text-center"><h2>Bem-vindo ao Maestro!</h2></div>;
 
 function App() {
   return (
@@ -15,7 +17,11 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          
+        </Route>
+        <Route element={<ProtectedLayout/>}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/users" element={<Users />} />
         </Route>
 
         <Route path="*" element={
