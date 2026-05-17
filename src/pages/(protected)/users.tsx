@@ -1,64 +1,80 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { User } from "@/types/User";
-
-import { Delete, SquarePen } from "lucide-react";
+import { useUsers } from "@/hooks/use-users"; 
+import { UsersHeader } from "@/components/users/usersHeader";
+import { UsersTable } from "@/components/users/usersTable";
+import { UserFormModal } from "@/components/users/userFormModal";
+import { UserDeleteModal } from "@/components/users/userDeleteModal";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function Users() {
-  const usersData: User[] = [
-    { name: "arthur", email: "arthurboma@teste.com", perfil: "SOLICITANTE", status: "ativo" },
-     { name: "arthur", email: "arthurboma@teste2.com", perfil: "SOLICITANTE", status: "ativo" },
-  ];
+  const {
+    usersData,
+    loading,
+    globalError,
+    successMsg,
+    isFormOpen,
+    setIsFormOpen,
+    isEditing,
+    formError,
+    formData,
+    isDeleteOpen,
+    setIsDeleteOpen,
+    userToDisable,
+    handleInputChange,
+    handleOpenCreate,
+    handleOpenEdit,
+    handleOpenDelete,
+    handleSubmitForm,
+    handleConfirmDisable,
+  } = useUsers();
 
   return (
-    <div className="p-4 flex flex-col w-full min-h-screen gap-2">
-      <header className="flex justify-between ">
-        <p className="title">Usuarios</p>
-        <Button size="lg">Novo Usuário</Button>
-      </header>
-      <hr />
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-2/10">Nome</TableHead>
-            <TableHead className="w-4/10">Email</TableHead>
-            <TableHead className="w-2/10 ">Perfil</TableHead>
-            <TableHead className="w-2/10">Status</TableHead>
-            <TableHead className="w-2/10 text-center">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {usersData.map((user) => (
-            <TableRow key={user.name}>
-              
-              <TableCell >{user.name}</TableCell>
-              
-              <TableCell >{user.email}</TableCell>
-              <TableCell >{user.perfil}</TableCell>
-              <TableCell>{user.status}</TableCell>
+    <div className="p-4 flex flex-col w-full min-h-screen gap-4 bg-neutral-50 font-sans text-slate-900">
+      <UsersHeader onNewUserClick={handleOpenCreate} />
+      
+      <hr className="border-slate-200" />
 
-              <TableCell className="flex justify-center items-center gap-2">
-                <Button>
-                  <SquarePen />
-                </Button>
+      {successMsg && (
+        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-md text-sm font-medium animate-in fade-in duration-200">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          {successMsg}
+        </div>
+      )}
+      
+      {globalError && (
+        <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md text-sm font-medium animate-in fade-in duration-200">
+          <AlertCircle className="w-4 h-4 text-red-600" />
+          {globalError}
+        </div>
+      )}
 
-                <Button variant="destructive">
-                  <Delete />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <UsersTable 
+        users={usersData} 
+        loading={loading} 
+        onEdit={handleOpenEdit} 
+        onDelete={handleOpenDelete} 
+      />
+
+      <UserFormModal 
+        isOpen={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        isEditing={isEditing}
+        formError={formError}
+        formData={formData}
+        loading={loading}
+        onChange={handleInputChange}
+        onSubmit={handleSubmitForm}
+      />
+
+      <UserDeleteModal 
+        isOpen={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        user={userToDisable}
+        loading={loading}
+        onConfirm={handleConfirmDisable}
+      />
+
     </div>
   );
 }
