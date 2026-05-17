@@ -1,6 +1,11 @@
-import React from 'react';
+import React, { InputHTMLAttributes } from 'react';
 
-const Input = ({ label, icon, ...props }) => {
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string; 
+  icon?: React.ReactNode; 
+}
+
+const Input = ({ label, icon, ...props }: InputProps) => {
   return (
     <div className="flex flex-col w-full">
       {label && <label className="text-sm font-bold text-gray-700 mb-1">{label}</label>}
