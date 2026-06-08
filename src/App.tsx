@@ -5,8 +5,8 @@ import MainLayout from './components/layout/MainLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ProtectedLayout from './components/layout/protectedLayout';
-import Dashboard from './pages/(protected)/dashboard';
 import Users from './pages/(protected)/users';
+import Presentations from './pages/(protected)/presentations';
 
 
 function App() {
@@ -20,8 +20,8 @@ function App() {
           
         </Route>
         <Route element={<ProtectedLayout/>}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/users" element={<Users />} />
+          <Route path="/gestao-apresentacoes" element={<Presentations />} />
+          <Route path="/gestao-usuarios" element={<Users />} />
         </Route>
 
         <Route path="*" element={

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { usePresentations } from "@/hooks/use-presentations";
+import { usePresentations } from "@/hooks/use-presentation";
 
 export default function PresentationsPage() {
   const currentCoordinatorId = "1"; 
