@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import ProtectedLayout from './components/layout/protectedLayout';
 import Dashboard from './pages/(protected)/dashboard';
 import Users from './pages/(protected)/users';
+import Presentations from './pages/(protected)/presentations';
 
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
         </Route>
         <Route element={<ProtectedLayout/>}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/presentations" element={<Presentations />} />
           <Route path="/users" element={<Users />} />
         </Route>
 

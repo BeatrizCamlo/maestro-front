@@ -4,13 +4,27 @@ import { useState, useEffect } from "react";
 import api from "@/services/api";
 import { Group, Event, Presentation } from "@/types/Presentation";
 
-    export function usePresentations(coordinatorId?: string | number) {
-    const [groups, setGroups] = useState<Group[]>([]);
-    const [events, setEvents] = useState<Event[]>([]);
-    const [pendingSolicitations, setPendingSolicitations] = useState<Presentation[]>([]);
-    const [confirmedPresentations, setConfirmedPresentations] = useState<Presentation[]>([]);
-    
-    const fetchData = async () => {
+export function usePresentations(coordinatorId?: string | number) {
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [pendingSolicitations, setPendingSolicitations] = useState<Presentation[]>([]);
+  const [confirmedPresentations, setConfirmedPresentations] = useState<Presentation[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string | number>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [globalError, setGlobalError] = useState<string>("");
+  const [successMsg, setSuccessMsg] = useState<string>("");
+  const [formError, setFormError] = useState<string>("");
+  const [isCreateOpen, setIsCreateOpen] = useState<boolean>(false);
+  const [isCancelOpen, setIsCancelOpen] = useState<boolean>(false);
+  const [cancelReason, setCancelReason] = useState<string>("");
+  const [solicitationToCancel, setSolicitationToCancel] = useState<Presentation | null>(null);
+  const [formData, setFormData] = useState({
+    groupId: "",
+    eventId: "",
+    time: "",
+  });
+
+  const fetchData = async () => {
     setLoading(true);
     setGlobalError("");
     try {
@@ -23,12 +37,12 @@ import { Group, Event, Presentation } from "@/types/Presentation";
       const eventsRes = await api.get("/api/v1/events");
       setEvents(eventsRes.data);
 
-      
       const solicitationsRes = await api.get("/api/v1/solicitations?status=PENDING");
       setPendingSolicitations(solicitationsRes.data);
     } catch (error) {
       console.error("Erro ao carregar dados iniciais:", error);
       
+      // Fallbacks para testes offline
       setGroups([
         { id: "1", name: "Grupo de Choro Maestro", coordinatorId: String(coordinatorId) },
         { id: "2", name: "Orquestra Jovem", coordinatorId: String(coordinatorId) },
@@ -38,7 +52,7 @@ import { Group, Event, Presentation } from "@/types/Presentation";
         { id: "102", name: "Recital de Outono" },
       ]);
       setPendingSolicitations([
-        { id: "501", groupId: "1", groupName: "Grupo de Choro Maestro", eventId: "101", eventName: "Festival de Inverno 2026", time: "2026-07-15T20:00", status: "PENDING" }
+        { id: "501", groupId: "1", groupName: "Grupo de Choro Maestro", eventId: "101", eventName: "Festival de Verão 2026", time: "2026-07-15T20:00", status: "PENDING" }
       ]);
     } finally {
       setLoading(false);
@@ -51,6 +65,7 @@ import { Group, Event, Presentation } from "@/types/Presentation";
     }
   }, [coordinatorId]);
 
+  // Busca apresentações confirmadas por Evento específico
   const fetchConfirmedPresentations = async (eventId: string | number) => {
     if (!eventId) {
       setConfirmedPresentations([]);
@@ -111,7 +126,7 @@ import { Group, Event, Presentation } from "@/types/Presentation";
     }
   };
 
-    const handleConfirmSolicitation = async (solicitationId: string | number) => {
+  const handleConfirmSolicitation = async (solicitationId: string | number) => {
     setLoading(true);
     setGlobalError("");
     setSuccessMsg("");
@@ -120,7 +135,7 @@ import { Group, Event, Presentation } from "@/types/Presentation";
       await api.post(`/api/v1/solicitations/${solicitationId}/confirm`);
       setSuccessMsg("Solicitação confirmada com sucesso!");
       fetchData(); 
-      if (selectedEventId) fetchConfirmedPresentations(selectedEventId); // Atualiza calendário se ativo
+      if (selectedEventId) fetchConfirmedPresentations(selectedEventId);
     } catch (error: any) {
       console.error("Erro ao confirmar:", error);
       setGlobalError(error.response?.data?.message || "Erro ao confirmar solicitação.");
@@ -129,15 +144,14 @@ import { Group, Event, Presentation } from "@/types/Presentation";
     }
   };
 
-  
-  const handleOpenCancel = (solicitation: Solicitation) => {
+  // Ajustado para receber 'Presentation' em vez de 'Solicitation' inexistente
+  const handleOpenCancel = (solicitation: Presentation) => {
     setSolicitationToCancel(solicitation);
     setCancelReason("");
     setFormError("");
     setIsCancelOpen(true);
   };
 
-  
   const handleConfirmCancel = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!solicitationToCancel) return;
