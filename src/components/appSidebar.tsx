@@ -28,6 +28,12 @@ export function AppSidebar() {
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                  <a href="/groups">
+                    <Users />
+                    <span>Grupos</span>
+                  </a>
+                </SidebarMenuButton>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

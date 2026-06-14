@@ -1,14 +1,3 @@
-import { User } from "./User";
-
-
-export interface Group {
-  id: string | number;
-  name: string;
-  coordinatorId: string | number;
-  coordinator?: User; 
-}
-
-
 export interface Event {
   id: string | number;
   name: string;
