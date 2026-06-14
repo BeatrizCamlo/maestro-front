@@ -1,4 +1,4 @@
-import { LayoutDashboard, User, Users, CalendarRange } from "lucide-react"
+import { LayoutDashboard, User, Users, CalendarRange, CalendarCheck } from "lucide-react"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "./ui/sidebar"
  
 export function AppSidebar() {
@@ -28,12 +28,22 @@ export function AppSidebar() {
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuButton asChild>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
                   <a href="/groups">
                     <Users />
                     <span>Grupos</span>
                   </a>
                 </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/events">
+                    <CalendarCheck />
+                    <span>Eventos</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
