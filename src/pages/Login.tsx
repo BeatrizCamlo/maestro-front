@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode'; // Certifique-se de instalar: npm install jwt-decode
 import api from '../services/api.js';
 
 const Login = () => {
@@ -21,24 +22,40 @@ const Login = () => {
 
     try {
       const response = await api.post('/v1/auth/login', formData);
+      const token = response.data.token;
       
-      // Armazena o token JWT retornado pelo Spring Boot
-      localStorage.setItem('token', response.data.token);
+      // 1. Armazena o token JWT
+      localStorage.setItem('token', token);
       
-      // Redireciona para a área logada interna do Maestro
-      navigate('/presentations');
+      // 2. Decodifica o token
+      const decoded = jwtDecode(token);
+      console.log("CONTEÚDO DO TOKEN DECODIFICADO:", decoded);
+      
+      // 3. Extrai o 'sub' (que o seu backend está enviando como "admin") e normaliza
+      const userSubject = decoded.sub ? String(decoded.sub).toLowerCase().trim() : "";
+      console.log("VALOR DO SUB PROCESSADO:", userSubject);
+
+      // 4. Salva a role tratada no localStorage
+      localStorage.setItem('user_role', userSubject);
+
+      // 5. Redirecionamento baseado no 'sub'
+      if (userSubject === 'admin') {
+        console.log("Redirecionando para /adminPage");
+        navigate('/adminPage');
+      } else if (userSubject === 'coordenador' || userSubject === 'coordinator') {
+        console.log("Redirecionando para /coordenadorPage");
+        navigate('/coordenadorPage');
+      } else {
+        console.log("Redirecionando para /clientePage (Fallback)");
+        navigate('/clientePage');
+      }
       
     } catch (error) {
       console.error("Erro na requisição de login:", error);
-      
       if (!error.response) {
-        setErrorMsg("Não foi possível conectar ao servidor. Verifique sua conexão ou o status do Docker.");
+        setErrorMsg("Não foi possível conectar ao servidor.");
       } else if (error.response.status === 401) {
-        setErrorMsg("Usuário ou senha incorretos. Tente novamente.");
-      } else if (error.response.status === 403) {
-        setErrorMsg("Acesso negado. Sua conta pode estar inativa.");
-      } else if (error.response.status === 404) {
-        setErrorMsg("Endpoint de login não encontrado (Erro 404). Verifique as rotas do backend.");
+        setErrorMsg("Usuário ou senha incorretos.");
       } else {
         setErrorMsg("Ocorreu um erro inesperado no sistema Maestro.");
       }

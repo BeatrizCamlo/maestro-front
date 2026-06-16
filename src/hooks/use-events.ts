@@ -27,19 +27,17 @@ export function useEvents() {
   const fetchEvents = async () => {
     setLoading(true);
     setGlobalError("");
-   try {
+    try {
       const response = await api.get("/api/v1/events");
-      
-      const sortedEvents = response.data.sort((a: Event, b: Event) => 
+      const pageContent = response.data.content || [];
+      const sortedEvents = pageContent.sort((a: Event, b: Event) => 
         new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
       );
       
       setEventsData(sortedEvents);
     } catch (error) {
       console.error("Erro na listagem:", error);
-      setEventsData([
-        { id: 1, title: "Reunião Anual", dateTime: "2026-06-14T15:30", location: "Auditório Principal", description: "Alinhamento do semestre" },
-      ]);
+      setGlobalError("Não foi possível carregar os eventos do servidor.");
     } finally {
       setLoading(false);
     }
@@ -87,7 +85,7 @@ export function useEvents() {
     setSuccessMsg("");
 
     const payload: Event = {
-        title: formData.title,
+      title: formData.title,
       dateTime: formData.dateTime,
       location: formData.location,
       description: formData.description || "",
@@ -105,8 +103,7 @@ export function useEvents() {
       fetchEvents(); 
     } catch (error: any) {
       console.error("Erro na requisição:", error);
-      setFormError("Ocorreu um erro ao salvar o evento.");
-      setIsFormOpen(false); // Remova se quiser manter o modal aberto no erro
+      setFormError(error.response?.data?.message || "Ocorreu um erro ao salvar o evento.");
     } finally {
       setLoading(false);
     }

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { User } from "@/types/User";
 import api from "@/services/api";
 
-// Extensão do tipo User para garantir o suporte ao {id} exigido no escopo
 export type UserWithId = User & { id?: string | number };
 
 export function useUsers() {
@@ -27,26 +26,21 @@ export function useUsers() {
     perfil: "SOLICITANTE",
     status: "ativo"
   });
-
-  // 1. LISTAGEM (GET api/v1/users)
+  
   const fetchUsers = async () => {
     setLoading(true);
     setGlobalError("");
     try {
-      const response = await api.get("/api/v1/users");
-      // Mapeia os dados garantindo que haja um id (usa o email como fallback caso o backend não envie id)
-      const usersWithKeys = response.data.map((user: any) => ({
+      const response = await api.get("/user-info");
+      const pageContent = response.data.content || [];
+      const usersWithKeys = pageContent.map((user: any) => ({
         ...user,
         id: user.id || user.email
       }));
       setUsersData(usersWithKeys);
     } catch (error) {
       console.error("Erro na listagem:", error);
-      // Fallback de dados locais caso a API falte no teste local
-      setUsersData([
-        { id: "1", name: "arthur", email: "arthurboma@teste.com", perfil: "SOLICITANTE", status: "ativo" },
-        { id: "2", name: "arthur", email: "arthurboma@teste2.com", perfil: "SOLICITANTE", status: "ativo" },
-      ]);
+      setGlobalError("Não foi possível carregar os usuários do servidor.");
     } finally {
       setLoading(false);
     }
@@ -87,7 +81,6 @@ export function useUsers() {
     setIsDeleteOpen(true);
   };
 
-  // 2. CADASTRO (POST api/v1/users) & 3. EDIÇÃO (PUT api/v1/users/{id})
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.email.trim()) {
@@ -99,71 +92,66 @@ export function useUsers() {
     setFormError("");
     setSuccessMsg("");
 
-    const userId = formData.id || formData.email;
+    const userId = formData.id;
 
     try {
-      if (isEditing) {
-        // EDIÇÃO: Envia para api/v1/users/{id}
-        await api.put(`/api/v1/users/${userId}`, formData);
+      if (isEditing && userId) {
+        await api.put(`/user-info/${userId}`, formData);
         setSuccessMsg("Usuário atualizado com sucesso!");
       } else {
-        // CADASTRO: Envia para api/v1/users
-        await api.post("/api/v1/users", formData);
+        await api.post("/user-info", formData);
         setSuccessMsg("Usuário cadastrado com sucesso!");
       }
       setIsFormOpen(false);
-      fetchUsers(); // Atualiza a lista vinda do banco automaticamente após ação
+      fetchUsers(); 
     } catch (error: any) {
       console.error("Erro na requisição:", error);
       
-      // Validação de E-mail duplicado baseada nas regras de negócio
       if (error.response && error.response.status === 409) {
-        setFormError("Este e-mail já está cadastrado no sistema.");
+        setFormError(error.response.data.message || "Conflito de dados ou e-mail já cadastrado.");
       } else {
-        // Fallback local caso queira testar a renderização visual sem banco de dados ativo
-        if (isEditing) {
-          setUsersData((prev) => prev.map((u) => (u.id === userId || u.email === formData.email ? formData : u)));
-          setSuccessMsg("Usuário atualizado localmente (API offline).");
-          setIsFormOpen(false);
-        } else {
-          if (usersData.some((u) => u.email === formData.email)) {
-            setFormError("Este e-mail já está cadastrado na lista local.");
-          } else {
-            setUsersData((prev) => [...prev, { ...formData, id: Date.now().toString() }]);
-            setSuccessMsg("Usuário cadastrado localmente (API offline).");
-            setIsFormOpen(false);
-          }
-        }
+        setFormError(error.response?.data?.message || "Ocorreu um erro ao salvar o usuário.");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // 4. DESATIVAÇÃO (DELETE api/v1/users/{id})
   const handleConfirmDisable = async () => {
-    if (!userToDisable) return;
+    if (!userToDisable || !userToDisable.id) return;
     setLoading(true);
     setGlobalError("");
     setSuccessMsg("");
-
-    const userId = userToDisable.id || userToDisable.email;
     
     try {
-      // DESATIVAÇÃO: Envia para api/v1/users/{id}
-      await api.delete(`/api/v1/users/${userId}`);
-      setSuccessMsg(`Usuário ${userToDisable.name} desativado com sucesso!`);
+      await api.delete(`/user-info/${userToDisable.id}`);
+      setSuccessMsg(`Usuário ${userToDisable.name} excluído com sucesso!`);
       setIsDeleteOpen(false);
-      fetchUsers(); // Atualiza a lista após desativar
-    } catch (error) {
-      console.error("Erro ao desativar:", error);
-      
-      // Fallback local para simulação visual instantânea
-      setUsersData((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, status: "desativado" as const } : u))
-      );
-      setSuccessMsg(`Usuário ${userToDisable.name} desativado localmente (API offline).`);
+      fetchUsers(); 
+    } catch (error: any) {
+      console.error("Erro ao excluir:", error);
+      if (error.response?.status === 409) {
+        setGlobalError("Não é possível excluir o usuário devido a dependências ou regras de negócio.");
+      } else {
+        setGlobalError("Não foi possível excluir o usuário no momento.");
+      }
       setIsDeleteOpen(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePromoteToCoordinator = async (id: string | number) => {
+    setLoading(true);
+    setGlobalError("");
+    setSuccessMsg("");
+    try {
+      await api.patch(`/user-info/${id}/coordenador`);
+      setSuccessMsg("Usuário promovido a coordenador com sucesso!");
+      fetchUsers();
+    } catch (error: any) {
+      console.error("Erro ao promover usuário:", error);
+      setGlobalError(error.response?.data?.message || "Erro ao tornar usuário coordenador.");
     } finally {
       setLoading(false);
     }
@@ -188,5 +176,6 @@ export function useUsers() {
     handleOpenDelete,
     handleSubmitForm,
     handleConfirmDisable,
+    handlePromoteToCoordinator,
   };
 }

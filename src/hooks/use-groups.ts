@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import api from "@/services/api";
 import { Group } from "@/types/Group";
 
-export type GroupWithId = Group & { id: string };
+export type GroupWithId = Group & { id: string | number };
 
 export function useGroups() {
   const [groupsData, setGroupsData] = useState<GroupWithId[]>([]);
@@ -24,20 +24,16 @@ export function useGroups() {
     coordenatorId: ""
   });
 
-  // 1. LISTAGEM (GET api/v1/groups)
   const fetchGroups = async () => {
     setLoading(true);
     setGlobalError("");
     try {
-      const response = await api.get("/api/v1/groups");
-      setGroupsData(response.data);
+      const response = await api.get("/v1/grupos-musicais");
+      const pageContent = response.data.content || [];
+      setGroupsData(pageContent);
     } catch (error) {
       console.error("Erro na listagem:", error);
-      // Fallback de dados locais (API offline)
-      setGroupsData([
-        { id: "1", name: "grupo de teste 1", coordenatorId: "101" },
-        { id: "2", name: "grupo de teste 2", coordenatorId: "102" },
-      ]);
+      setGlobalError("Não foi possível carregar os grupos musicais do servidor.");
     } finally {
       setLoading(false);
     }
@@ -76,11 +72,9 @@ export function useGroups() {
     setIsDeleteOpen(true);
   };
 
-  // 2. CADASTRO & 3. EDIÇÃO
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validação
     if (!formData.name?.trim() || !formData.coordenatorId?.trim()) {
       setFormError("Nome e Coordenador são obrigatórios.");
       return;
@@ -97,11 +91,10 @@ export function useGroups() {
 
     try {
       if (isEditing && formData.id) {
-        await api.put(`/api/v1/groups/${formData.id}`, payload);
+        await api.put(`/v1/grupos-musicais/${formData.id}`, payload);
         setSuccessMsg("Grupo atualizado com sucesso!");
       } else {
-
-        await api.post("/api/v1/groups", payload);
+        await api.post("/v1/grupos-musicais", payload);
         setSuccessMsg("Grupo cadastrado com sucesso!");
       }
       setIsFormOpen(false);
@@ -110,28 +103,15 @@ export function useGroups() {
       console.error("Erro na requisição:", error);
       
       if (error.response?.status === 409) {
-        setFormError("Já existe um grupo com este nome.");
+        setFormError("Já existe um grupo com este nome ou conflito de dados.");
       } else {
-        if (isEditing && formData.id) {
-          setGroupsData((prev) => 
-            prev.map((g) => (g.id === formData.id ? { ...g, ...payload } : g))
-          );
-          setSuccessMsg("Grupo atualizado localmente (API offline).");
-        } else {
-          setGroupsData((prev) => [
-            ...prev, 
-            { ...payload, id: Date.now().toString() }
-          ]);
-          setSuccessMsg("Grupo cadastrado localmente (API offline).");
-        }
-        setIsFormOpen(false);
+        setFormError(error.response?.data?.message || "Ocorreu um erro ao salvar o grupo musical.");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // 4. DELETAR / DESATIVAR
   const handleConfirmDisable = async () => {
     if (!groupToDisable?.id) return;
     
@@ -140,16 +120,17 @@ export function useGroups() {
     setSuccessMsg("");
 
     try {
-      // DELETE api/v1/groups/{id}
-      await api.delete(`/api/v1/groups/${groupToDisable.id}`);
-      setSuccessMsg(`Grupo ${groupToDisable.name} deletado com sucesso!`);
+      await api.delete(`/v1/grupos-musicais/${groupToDisable.id}`);
+      setSuccessMsg(`Grupo "${groupToDisable.name}" excluído com sucesso!`);
       setIsDeleteOpen(false);
       fetchGroups(); 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao deletar:", error);
-      
-      setGroupsData((prev) => prev.filter((g) => g.id !== groupToDisable.id));
-      setSuccessMsg(`Grupo ${groupToDisable.name} deletado localmente (API offline).`);
+      if (error.response?.status === 409) {
+        setGlobalError("Não é possível excluir o grupo pois ele possui dependências vinculadas.");
+      } else {
+        setGlobalError("Não foi possível excluir o grupo musical no momento.");
+      }
       setIsDeleteOpen(false);
     } finally {
       setLoading(false);

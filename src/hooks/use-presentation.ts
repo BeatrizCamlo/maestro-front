@@ -28,32 +28,28 @@ export function usePresentations(coordinatorId?: string | number) {
     setLoading(true);
     setGlobalError("");
     try {
-      const groupsRes = await api.get("/api/v1/groups");
-      const filteredGroups = groupsRes.data.filter(
-        (g: any) => String(g.coordinatorId) === String(coordinatorId)
+      const groupsRes = await api.get("/v1/grupos-musicais");
+      const groupsContent = groupsRes.data.content || [];
+      
+      const filteredGroups = groupsContent.filter(
+        (g: any) => 
+          String(g.coordinatorId || g.coordenatorId) === String(coordinatorId)
       );
       setGroups(filteredGroups);
 
-      const eventsRes = await api.get("/api/v1/events");
-      setEvents(eventsRes.data);
+      const eventsRes = await api.get("/v1/events");
+      const eventsContent = eventsRes.data.content || [];
+      setEvents(eventsContent);
 
-      const solicitationsRes = await api.get("/api/v1/solicitations?status=PENDING");
-      setPendingSolicitations(solicitationsRes.data);
-    } catch (error) {
+      const solicitationsRes = await api.get("/presentation-requests/pending");
+      const solicitationsContent = Array.isArray(solicitationsRes.data) 
+        ? solicitationsRes.data 
+        : (solicitationsRes.data.content || []);
+      setPendingSolicitations(solicitationsContent);
+
+    } catch (error: any) {
       console.error("Erro ao carregar dados iniciais:", error);
-      
-      // Fallbacks para testes offline
-      setGroups([
-        { id: "1", name: "Grupo de Choro Maestro", coordinatorId: String(coordinatorId) },
-        { id: "2", name: "Orquestra Jovem", coordinatorId: String(coordinatorId) },
-      ]);
-      setEvents([
-        { id: "101", name: "Festival de Verão 2026" },
-        { id: "102", name: "Recital de Outono" },
-      ]);
-      setPendingSolicitations([
-        { id: "501", groupId: "1", groupName: "Grupo de Choro Maestro", eventId: "101", eventName: "Festival de Verão 2026", time: "2026-07-15T20:00", status: "PENDING" }
-      ]);
+      setGlobalError("Não foi possível carregar os dados do servidor.");
     } finally {
       setLoading(false);
     }
@@ -65,20 +61,23 @@ export function usePresentations(coordinatorId?: string | number) {
     }
   }, [coordinatorId]);
 
-  // Busca apresentações confirmadas por Evento específico
   const fetchConfirmedPresentations = async (eventId: string | number) => {
     if (!eventId) {
       setConfirmedPresentations([]);
       return;
     }
     try {
-      const response = await api.get(`/api/v1/events/${eventId}/presentations?status=CONFIRMED`);
-      setConfirmedPresentations(response.data);
+      // ROTA CORRIGIDA: Removido o "/v1"
+      const response = await api.get("/presentation-requests/confirmed");
+      const resContent = Array.isArray(response.data) 
+        ? response.data 
+        : (response.data.content || []);
+
+      const filtered = resContent.filter((p: any) => String(p.eventId) === String(eventId));
+      setConfirmedPresentations(filtered);
     } catch (error) {
       console.error("Erro ao buscar apresentações confirmadas:", error);
-      setConfirmedPresentations([
-        { id: "601", groupId: "2", groupName: "Orquestra Jovem", eventId: eventId, time: "2026-07-15T18:00", status: "CONFIRMED" }
-      ]);
+      setGlobalError("Erro ao atualizar lista de apresentações confirmadas.");
     }
   };
 
@@ -110,13 +109,14 @@ export function usePresentations(coordinatorId?: string | number) {
     setSuccessMsg("");
 
     try {
-      await api.post("/api/v1/solicitations", formData);
+      // ROTA CORRIGIDA: Removido o "/v1"
+      await api.post("/presentation-requests", formData);
       setSuccessMsg("Solicitação criada com sucesso!");
       setIsCreateOpen(false);
       fetchData(); 
     } catch (error: any) {
       console.error("Erro ao criar solicitação:", error);
-      if (error.response && error.response.data && error.response.data.message) {
+      if (error.response?.data?.message) {
         setFormError(error.response.data.message);
       } else {
         setFormError("Erro de conflito de horário ou falha na API.");
@@ -132,7 +132,7 @@ export function usePresentations(coordinatorId?: string | number) {
     setSuccessMsg("");
 
     try {
-      await api.post(`/api/v1/solicitations/${solicitationId}/confirm`);
+      await api.patch(`/presentation-requests/${solicitationId}/confirm`, {});
       setSuccessMsg("Solicitação confirmada com sucesso!");
       fetchData(); 
       if (selectedEventId) fetchConfirmedPresentations(selectedEventId);
@@ -144,7 +144,6 @@ export function usePresentations(coordinatorId?: string | number) {
     }
   };
 
-  // Ajustado para receber 'Presentation' em vez de 'Solicitation' inexistente
   const handleOpenCancel = (solicitation: Presentation) => {
     setSolicitationToCancel(solicitation);
     setCancelReason("");
@@ -165,7 +164,7 @@ export function usePresentations(coordinatorId?: string | number) {
     setSuccessMsg("");
 
     try {
-      await api.post(`/api/v1/solicitations/${solicitationToCancel.id}/cancel`, {
+      await api.patch(`/presentation-requests/${solicitationToCancel.id}/cancel`, {
         reason: cancelReason,
       });
       setSuccessMsg("Solicitação cancelada com sucesso!");
