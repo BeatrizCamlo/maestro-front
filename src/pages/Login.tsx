@@ -26,7 +26,7 @@ const Login = () => {
       localStorage.setItem('token', response.data.token);
       
       // Redireciona para a área logada interna do Maestro
-      navigate('/gestao-apresentacoes');
+      navigate('/presentations');
       
     } catch (error) {
       console.error("Erro na requisição de login:", error);
