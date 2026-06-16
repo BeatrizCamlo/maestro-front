@@ -28,7 +28,7 @@ export function useEvents() {
     setLoading(true);
     setGlobalError("");
     try {
-      const response = await api.get("/api/v1/events");
+      const response = await api.get("/v1/events");
       const pageContent = response.data.content || [];
       const sortedEvents = pageContent.sort((a: Event, b: Event) => 
         new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
@@ -93,10 +93,10 @@ export function useEvents() {
 
     try {
       if (isEditing && formData.id) {
-        await api.put(`/api/v1/events/${formData.id}`, payload);
+        await api.put(`/v1/events/${formData.id}`, payload);
         setSuccessMsg("Evento atualizado com sucesso!");
       } else {
-        await api.post("/api/v1/events", payload);
+        await api.post("/v1/events", payload);
         setSuccessMsg("Evento cadastrado com sucesso!");
       }
       setIsFormOpen(false);
@@ -117,7 +117,7 @@ export function useEvents() {
     setSuccessMsg("");
 
     try {
-      await api.delete(`/api/v1/events/${eventToDelete.id}`);
+      await api.delete(`/v1/events/${eventToDelete.id}`);
       setSuccessMsg(`Evento "${eventToDelete.title}" excluído com sucesso!`);
       setIsDeleteOpen(false);
       fetchEvents(); 
