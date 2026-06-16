@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-
+import { jwtDecode } from 'jwt-decode'; // Certifique-se de instalar: npm install jwt-decode
 import api from '../services/api.js';
 
 const Login = () => {
@@ -21,16 +21,41 @@ const Login = () => {
     setErrorMsg("");
 
     try {
-      const response = await api.post('/auth/login', formData);
-      localStorage.setItem('token', response.data.token);
-      navigate('/dashboard');
+      const response = await api.post('/v1/auth/login', formData);
+      const token = response.data.token;
+      
+      // 1. Armazena o token JWT
+      localStorage.setItem('token', token);
+      
+      // 2. Decodifica o token
+      const decoded = jwtDecode(token);
+      console.log("CONTEÚDO DO TOKEN DECODIFICADO:", decoded);
+      
+      // 3. Extrai o 'sub' (que o seu backend está enviando como "admin") e normaliza
+      const userSubject = decoded.sub ? String(decoded.sub).toLowerCase().trim() : "";
+      console.log("VALOR DO SUB PROCESSADO:", userSubject);
+
+      // 4. Salva a role tratada no localStorage
+      localStorage.setItem('user_role', userSubject);
+
+      // 5. Redirecionamento baseado no 'sub'
+      if (userSubject === 'admin') {
+        console.log("Redirecionando para /adminPage");
+        navigate('/adminPage');
+      } else if (userSubject === 'coordenador' || userSubject === 'coordinator') {
+        console.log("Redirecionando para /coordenadorPage");
+        navigate('/coordenadorPage');
+      } else {
+        console.log("Redirecionando para /clientePage (Fallback)");
+        navigate('/clientePage');
+      }
+      
     } catch (error) {
+      console.error("Erro na requisição de login:", error);
       if (!error.response) {
-        setErrorMsg("Não foi possível conectar ao servidor. Verifique sua conexão.");
+        setErrorMsg("Não foi possível conectar ao servidor.");
       } else if (error.response.status === 401) {
-        setErrorMsg("Usuário ou senha incorretos. Tente novamente.");
-      } else if (error.response.status === 403) {
-        setErrorMsg("Acesso negado. Sua conta pode estar inativa.");
+        setErrorMsg("Usuário ou senha incorretos.");
       } else {
         setErrorMsg("Ocorreu um erro inesperado no sistema Maestro.");
       }
@@ -42,6 +67,8 @@ const Login = () => {
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-4 font-sans">
       <div className="bg-neutral-white p-8 rounded-2xl shadow-2xl w-full max-w-[400px] flex flex-col items-center relative mt-16">
+        
+        {/* Ícone decorativo superior */}
         <div className="absolute -top-12 bg-primary-dark rounded-full p-6 border-[10px] border-neutral-extra-light shadow-md">
           <svg className="w-10 h-10 text-neutral-white" fill="currentColor" viewBox="0 0 20 20">
             <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
@@ -54,6 +81,7 @@ const Login = () => {
               {errorMsg}
             </div>
           )}
+          
           <div className="relative">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-primary-dark">
                <i className="fas fa-envelope opacity-70"></i>
@@ -64,8 +92,9 @@ const Login = () => {
               placeholder="Usuário" 
               value={formData.username}
               onChange={handleChange}
+              disabled={loading}
               required
-              className="w-full pl-10 pr-4 py-3 bg-neutral-extra-light rounded focus:outline-none focus:ring-2 focus:ring-primary-light transition-all placeholder-neutral-medium text-neutral-darkest"
+              className="w-full pl-10 pr-4 py-3 bg-neutral-extra-light rounded focus:outline-none focus:ring-2 focus:ring-primary-light transition-all placeholder-neutral-medium text-neutral-darkest disabled:opacity-60"
             />
           </div>
 
@@ -79,8 +108,9 @@ const Login = () => {
               placeholder="Senha" 
               value={formData.password}
               onChange={handleChange}
+              disabled={loading}
               required
-              className="w-full pl-10 pr-4 py-3 bg-neutral-extra-light rounded focus:outline-none focus:ring-2 focus:ring-primary-light transition-all placeholder-neutral-medium text-neutral-darkest"
+              className="w-full pl-10 pr-4 py-3 bg-neutral-extra-light rounded focus:outline-none focus:ring-2 focus:ring-primary-light transition-all placeholder-neutral-medium text-neutral-darkest disabled:opacity-60"
             />
           </div>
 

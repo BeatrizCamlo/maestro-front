@@ -27,19 +27,17 @@ export function useEvents() {
   const fetchEvents = async () => {
     setLoading(true);
     setGlobalError("");
-   try {
-      const response = await api.get("/api/v1/events");
-      
-      const sortedEvents = response.data.sort((a: Event, b: Event) => 
+    try {
+      const response = await api.get("/v1/events");
+      const pageContent = response.data.content || [];
+      const sortedEvents = pageContent.sort((a: Event, b: Event) => 
         new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
       );
       
       setEventsData(sortedEvents);
     } catch (error) {
       console.error("Erro na listagem:", error);
-      setEventsData([
-        { id: 1, title: "Reunião Anual", dateTime: "2026-06-14T15:30", location: "Auditório Principal", description: "Alinhamento do semestre" },
-      ]);
+      setGlobalError("Não foi possível carregar os eventos do servidor.");
     } finally {
       setLoading(false);
     }
@@ -87,7 +85,7 @@ export function useEvents() {
     setSuccessMsg("");
 
     const payload: Event = {
-        title: formData.title,
+      title: formData.title,
       dateTime: formData.dateTime,
       location: formData.location,
       description: formData.description || "",
@@ -95,18 +93,17 @@ export function useEvents() {
 
     try {
       if (isEditing && formData.id) {
-        await api.put(`/api/v1/events/${formData.id}`, payload);
+        await api.put(`/v1/events/${formData.id}`, payload);
         setSuccessMsg("Evento atualizado com sucesso!");
       } else {
-        await api.post("/api/v1/events", payload);
+        await api.post("/v1/events", payload);
         setSuccessMsg("Evento cadastrado com sucesso!");
       }
       setIsFormOpen(false);
       fetchEvents(); 
     } catch (error: any) {
       console.error("Erro na requisição:", error);
-      setFormError("Ocorreu um erro ao salvar o evento.");
-      setIsFormOpen(false); // Remova se quiser manter o modal aberto no erro
+      setFormError(error.response?.data?.message || "Ocorreu um erro ao salvar o evento.");
     } finally {
       setLoading(false);
     }
@@ -120,7 +117,7 @@ export function useEvents() {
     setSuccessMsg("");
 
     try {
-      await api.delete(`/api/v1/events/${eventToDelete.id}`);
+      await api.delete(`/v1/events/${eventToDelete.id}`);
       setSuccessMsg(`Evento "${eventToDelete.title}" excluído com sucesso!`);
       setIsDeleteOpen(false);
       fetchEvents(); 
