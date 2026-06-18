@@ -16,7 +16,7 @@ export default function ClientePage() {
     loading: presentationLoading, 
     handleInputChange: handlePresentationInputChange, 
     handleCreateSolicitation 
-  } = usePresentations();
+  } = usePresentations("1");
 
   const { groupsData, fetchGroups } = useGroups();
 

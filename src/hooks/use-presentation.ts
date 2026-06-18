@@ -31,10 +31,9 @@ export function usePresentations(coordinatorId?: string | number) {
       const groupsRes = await api.get("/v1/grupos-musicais");
       const groupsContent = groupsRes.data.content || groupsRes.data || [];
       
-      const filteredGroups = groupsContent.filter(
-        (g: any) => String(g.coordenadorId || g.coordenadorId || g.coordinatorId) === String(coordinatorId)
-      );
-      setGroups(filteredGroups);
+      const filteredGroups = groupsContent.filter((g: any) => {
+      return g.membros?.some((m: any) => String(m.id) === String(coordinatorId)); 
+    });
 
       const eventsRes = await api.get("/v1/events");
       const eventsContent = eventsRes.data.content || eventsRes.data || [];
@@ -107,17 +106,20 @@ export function usePresentations(coordinatorId?: string | number) {
     setSuccessMsg("");
 
     try {
-      await api.post("/presentation-requests", {
-        groupId: Number(formData.groupId),
+      const payload = {
         eventId: Number(formData.eventId),
-        time: formData.time
-      });
+      };
+
+      const url = `/presentation-requests?musicalGroupId=${formData.groupId}&time=${encodeURIComponent(formData.time)}`;
+
+      await api.post(url, payload);
+      
       setSuccessMsg("Solicitação criada com sucesso!");
       setIsCreateOpen(false);
       fetchData(); 
     } catch (error: any) {
-      console.error("Erro ao criar solicitação:", error);
-      setFormError(error.response?.data?.message || "Erro de conflito de horário ou falha na API.");
+      console.error("Erro ao criar:", error);
+      setFormError(error.response?.data?.message || "Erro ao conectar com o servidor.");
     } finally {
       setLoading(false);
     }
