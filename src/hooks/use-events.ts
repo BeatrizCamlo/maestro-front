@@ -29,10 +29,13 @@ export function useEvents() {
     setGlobalError("");
     try {
       const response = await api.get("/v1/events");
-      const pageContent = response.data.content || [];
-      const sortedEvents = pageContent.sort((a: Event, b: Event) => 
-        new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
-      );
+      const pageContent = response.data.content || response.data || [];
+      
+      const sortedEvents = pageContent.sort((a: Event, b: Event) => {
+        const dateA = a.dateTime ? new Date(a.dateTime).getTime() : 0;
+        const dateB = b.dateTime ? new Date(b.dateTime).getTime() : 0;
+        return dateA - dateB;
+      });
       
       setEventsData(sortedEvents);
     } catch (error) {
@@ -85,10 +88,10 @@ export function useEvents() {
     setSuccessMsg("");
 
     const payload: Event = {
-      title: formData.title,
+      title: formData.title.trim(),
       dateTime: formData.dateTime,
-      location: formData.location,
-      description: formData.description || "",
+      location: formData.location.trim(),
+      description: formData.description?.trim() || "",
     };
 
     try {

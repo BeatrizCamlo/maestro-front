@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import api from "@/services/api";
 import { Group, Event, Presentation } from "@/types/Presentation";
 
@@ -24,21 +24,20 @@ export function usePresentations(coordinatorId?: string | number) {
     time: "",
   });
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setGlobalError("");
     try {
       const groupsRes = await api.get("/v1/grupos-musicais");
-      const groupsContent = groupsRes.data.content || [];
+      const groupsContent = groupsRes.data.content || groupsRes.data || [];
       
       const filteredGroups = groupsContent.filter(
-        (g: any) => 
-          String(g.coordinatorId || g.coordenatorId) === String(coordinatorId)
+        (g: any) => String(g.coordenadorId || g.coordenadorId || g.coordinatorId) === String(coordinatorId)
       );
       setGroups(filteredGroups);
 
       const eventsRes = await api.get("/v1/events");
-      const eventsContent = eventsRes.data.content || [];
+      const eventsContent = eventsRes.data.content || eventsRes.data || [];
       setEvents(eventsContent);
 
       const solicitationsRes = await api.get("/presentation-requests/pending");
@@ -53,37 +52,36 @@ export function usePresentations(coordinatorId?: string | number) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [coordinatorId]);
 
   useEffect(() => {
     if (coordinatorId) {
       fetchData();
     }
-  }, [coordinatorId]);
+  }, [coordinatorId, fetchData]);
 
-  const fetchConfirmedPresentations = async (eventId: string | number) => {
+  const fetchConfirmedPresentations = useCallback(async (eventId: string | number) => {
     if (!eventId) {
       setConfirmedPresentations([]);
       return;
     }
     try {
-      // ROTA CORRIGIDA: Removido o "/v1"
       const response = await api.get("/presentation-requests/confirmed");
       const resContent = Array.isArray(response.data) 
         ? response.data 
         : (response.data.content || []);
 
-      const filtered = resContent.filter((p: any) => String(p.eventId) === String(eventId));
+      const filtered = resContent.filter((p: any) => String(p.eventId || p.event?.id) === String(eventId));
       setConfirmedPresentations(filtered);
     } catch (error) {
       console.error("Erro ao buscar apresentações confirmadas:", error);
       setGlobalError("Erro ao atualizar lista de apresentações confirmadas.");
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchConfirmedPresentations(selectedEventId);
-  }, [selectedEventId]);
+  }, [selectedEventId, fetchConfirmedPresentations]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -109,18 +107,17 @@ export function usePresentations(coordinatorId?: string | number) {
     setSuccessMsg("");
 
     try {
-      // ROTA CORRIGIDA: Removido o "/v1"
-      await api.post("/presentation-requests", formData);
+      await api.post("/presentation-requests", {
+        groupId: Number(formData.groupId),
+        eventId: Number(formData.eventId),
+        time: formData.time
+      });
       setSuccessMsg("Solicitação criada com sucesso!");
       setIsCreateOpen(false);
       fetchData(); 
     } catch (error: any) {
       console.error("Erro ao criar solicitação:", error);
-      if (error.response?.data?.message) {
-        setFormError(error.response.data.message);
-      } else {
-        setFormError("Erro de conflito de horário ou falha na API.");
-      }
+      setFormError(error.response?.data?.message || "Erro de conflito de horário ou falha na API.");
     } finally {
       setLoading(false);
     }
@@ -179,29 +176,11 @@ export function usePresentations(coordinatorId?: string | number) {
   };
 
   return {
-    groups,
-    events,
-    pendingSolicitations,
-    confirmedPresentations,
-    selectedEventId,
-    setSelectedEventId,
-    loading,
-    globalError,
-    successMsg,
-    formError,
-    isCreateOpen,
-    setIsCreateOpen,
-    isCancelOpen,
-    setIsCancelOpen,
-    formData,
-    cancelReason,
-    setCancelReason,
-    solicitationToCancel,
-    handleInputChange,
-    handleOpenCreate,
-    handleCreateSolicitation,
-    handleConfirmSolicitation,
-    handleOpenCancel,
-    handleConfirmCancel,
+    groups, events, pendingSolicitations, confirmedPresentations,
+    selectedEventId, setSelectedEventId, loading, globalError, successMsg,
+    formError, isCreateOpen, setIsCreateOpen, isCancelOpen, setIsCancelOpen,
+    formData, cancelReason, setCancelReason, solicitationToCancel,
+    handleInputChange, handleOpenCreate, handleCreateSolicitation,
+    handleConfirmSolicitation, handleOpenCancel, handleConfirmCancel,
   };
 }
