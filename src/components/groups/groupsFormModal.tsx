@@ -60,21 +60,19 @@ export function GroupFormModal({
                 name="name" 
                 value={formData.name || ""} 
                 onChange={onChange} 
-                placeholder="Ex: Grupo de Vendas"
                 required 
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="coordenatorId" className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              <label htmlFor="coordenadorId" className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 ID do Coordenador *
               </label>
               <Input 
-                id="coordenatorId" 
-                name="coordenatorId" 
-                value={formData.coordenatorId || ""} 
-                onChange={onChange} 
-                placeholder="Ex: 12345"
+                id="coordenador/Id" 
+                name="coordenadorId" 
+                value={formData.coordenadorId || ""} 
+                onChange={onChange}
                 required 
               />
        

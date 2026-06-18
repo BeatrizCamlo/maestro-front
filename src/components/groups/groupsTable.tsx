@@ -43,7 +43,7 @@ export function GroupsTable({ groups, loading, onEdit, onDelete }: GroupsTablePr
                 <TableCell className="font-medium text-slate-800">{group.name}</TableCell>
                 <TableCell className="text-slate-600">
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800">
-                    {group.coordenatorId}
+                    {group.coordenadorId}
                   </span>
                 </TableCell>
                 <TableCell className="flex justify-center items-center gap-2">

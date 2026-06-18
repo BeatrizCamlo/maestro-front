@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from "react";
 import api from "@/services/api";
-import { Group } from "@/types/Group";
 
-export type GroupWithId = Group & { id: string | number };
+export type GroupWithId = {
+  id: string | number;
+  name: string;
+  coordenadorId: string | number;
+};
 
 export function useGroups() {
   const [groupsData, setGroupsData] = useState<GroupWithId[]>([]);
@@ -21,7 +24,7 @@ export function useGroups() {
   
   const [formData, setFormData] = useState<Partial<GroupWithId>>({
     name: "",
-    coordenatorId: ""
+    coordenadorId: ""
   });
 
   const fetchGroups = async () => {
@@ -29,8 +32,14 @@ export function useGroups() {
     setGlobalError("");
     try {
       const response = await api.get("/v1/grupos-musicais");
-      const pageContent = response.data.content || [];
-      setGroupsData(pageContent);
+      const pageContent = response.data.content || response.data || [];
+      const formattedGroups = pageContent.map((g: any) => ({
+        id: g.id,
+        name: g.nome || g.name,
+        coordenadorId: g.coordenadorId || g.coordenatorId
+      }));
+
+      setGroupsData(formattedGroups);
     } catch (error) {
       console.error("Erro na listagem:", error);
       setGlobalError("Não foi possível carregar os grupos musicais do servidor.");
@@ -43,6 +52,27 @@ export function useGroups() {
     fetchGroups();
   }, []);
 
+  const handleRequestJoinGroup = async (groupId: string | number) => {
+    if (!groupId) return;
+    
+    setLoading(true);
+    setGlobalError("");
+    setSuccessMsg("");
+    
+    try {
+      await api.post(`/v1/grupos-musicais/${groupId}/vincular`, {});
+      
+      setSuccessMsg("Solicitação de vínculo realizada com sucesso!");
+    } catch (error: any) {
+      console.error("Erro ao solicitar vínculo:", error);
+      setGlobalError(
+        error.response?.data?.message || "Não foi possível solicitar o vínculo ao grupo."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     if (formError) setFormError("");
@@ -52,7 +82,7 @@ export function useGroups() {
   const handleOpenCreate = () => {
     setIsEditing(false);
     setFormError("");
-    setFormData({ name: "", coordenatorId: "" });
+    setFormData({ name: "", coordenadorId: "" });
     setIsFormOpen(true);
   };
 
@@ -62,7 +92,7 @@ export function useGroups() {
     setFormData({
       id: group.id,
       name: group.name,
-      coordenatorId: group.coordenatorId,
+      coordenadorId: group.coordenadorId,
     });
     setIsFormOpen(true);
   };
@@ -75,7 +105,7 @@ export function useGroups() {
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name?.trim() || !formData.coordenatorId?.trim()) {
+    if (!formData.name?.trim() || !String(formData.coordenadorId).trim()) {
       setFormError("Nome e Coordenador são obrigatórios.");
       return;
     }
@@ -84,15 +114,15 @@ export function useGroups() {
     setFormError("");
     setSuccessMsg("");
 
-    const payload: Group = {
-      name: formData.name,
-      coordenatorId: formData.coordenatorId,
+    const payload = {
+      nome: formData.name.trim(),
+      coordenadorId: Number(formData.coordenadorId)
     };
 
     try {
       if (isEditing && formData.id) {
         await api.put(`/v1/grupos-musicais/${formData.id}`, payload);
-        setSuccessMsg("Grupo atualizado com sucesso!");
+        setSuccessMsg("Grupo updated com sucesso!");
       } else {
         await api.post("/v1/grupos-musicais", payload);
         setSuccessMsg("Grupo cadastrado com sucesso!");
@@ -101,7 +131,6 @@ export function useGroups() {
       fetchGroups(); 
     } catch (error: any) {
       console.error("Erro na requisição:", error);
-      
       if (error.response?.status === 409) {
         setFormError("Já existe um grupo com este nome ou conflito de dados.");
       } else {
@@ -157,5 +186,6 @@ export function useGroups() {
     handleOpenDelete,
     handleSubmitForm,
     handleConfirmDisable,
+    handleRequestJoinGroup,
   };
 }
