@@ -18,6 +18,7 @@ export function usePresentations(coordinatorId?: string | number) {
   const [isCancelOpen, setIsCancelOpen] = useState<boolean>(false);
   const [cancelReason, setCancelReason] = useState<string>("");
   const [solicitationToCancel, setSolicitationToCancel] = useState<Presentation | null>(null);
+  const [allAvailableGroups, setAllAvailableGroups] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     groupId: "",
     eventId: "",
@@ -28,26 +29,23 @@ export function usePresentations(coordinatorId?: string | number) {
     setLoading(true);
     setGlobalError("");
     try {
-      const groupsRes = await api.get("/v1/grupos-musicais");
-      const groupsContent = groupsRes.data.content || groupsRes.data || [];
-      
-      const filteredGroups = groupsContent.filter((g: any) => {
-      return g.membros?.some((m: any) => String(m.id) === String(coordinatorId)); 
-    });
-
       const eventsRes = await api.get("/v1/events");
       const eventsContent = eventsRes.data.content || eventsRes.data || [];
       setEvents(eventsContent);
 
-      const solicitationsRes = await api.get("/presentation-requests/pending");
-      const solicitationsContent = Array.isArray(solicitationsRes.data) 
-        ? solicitationsRes.data 
-        : (solicitationsRes.data.content || []);
-      setPendingSolicitations(solicitationsContent);
+      const groupsRes = await api.get("/v1/grupos-musicais");
+      const allGroups = groupsRes.data.content || groupsRes.data || [];
+      
+      const meusGrupos = allGroups.filter((g: any) => {
+        return g.membros?.some((m: any) => String(m.id) === String(coordinatorId));
+      });
+
+      setGroups(meusGrupos);
+      setAllAvailableGroups(allGroups); 
 
     } catch (error: any) {
-      console.error("Erro ao carregar dados iniciais:", error);
-      setGlobalError("Não foi possível carregar os dados do servidor.");
+      console.error("Erro ao carregar dados:", error);
+      setGlobalError("Não foi possível carregar os dados.");
     } finally {
       setLoading(false);
     }

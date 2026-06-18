@@ -15,7 +15,8 @@ export default function ClientePage() {
     successMsg: presentationSuccessMsg, 
     loading: presentationLoading, 
     handleInputChange: handlePresentationInputChange, 
-    handleCreateSolicitation 
+    handleCreateSolicitation,
+    allAvailableGroups,    
   } = usePresentations("1");
 
   const { groupsData, fetchGroups } = useGroups();
@@ -131,9 +132,7 @@ export default function ClientePage() {
                 className="w-full p-2.5 bg-neutral-extra-light rounded border border-neutral-light text-sm text-neutral-darkest focus:ring-2 focus:ring-primary-light outline-none"
               >
                 <option value="">Selecione o grupo que irá se apresentar...</option>
-                {groups.map((g: any) => (
-                  <option key={g.id} value={g.id}>{g.name}</option>
-                ))}
+                {groups.map(g => <option key={g.id} value={g.id}>{g.nome}</option>)}
               </select>
             </div>
 
